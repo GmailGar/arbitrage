@@ -26,8 +26,11 @@ def index():
 @app.route('/update', methods=['POST'])
 def update():
     data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'No data received'}), 400
     iteration = data.get('iteration')
     opportunities = data.get('opportunities', [])
+    print(f"Received iteration {iteration}, opportunities: {opportunities}")  # Лог для отладки
     
     # Добавляем контракты и ссылки к данным
     enriched_opportunities = []

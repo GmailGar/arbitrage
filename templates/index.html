@@ -67,32 +67,39 @@
                     headers: { 'Content-Type': 'application/json' },
                 });
                 const data = await response.json();
+                console.log('Fetched data:', data); // Отладочный вывод
                 if (data.status === 'success') {
                     document.getElementById('iteration').textContent = `Итерация ${data.iteration}`;
                     const opportunitiesDiv = document.getElementById('opportunities');
                     opportunitiesDiv.innerHTML = '';
 
-                    data.opportunities.forEach(opp => {
-                        const div = document.createElement('div');
-                        div.className = 'opportunity';
-                        div.innerHTML = `
-                            <div class="token-label">${opp.token_name} ${opp.contract ? `<span class="contract-text">${opp.contract}</span>` : ''}</div>
-                            <div class="price">Jupiter: <span>${opp.jupiter_price !== null ? opp.jupiter_price.toFixed(6) : 'N/A'}</span></div>
-                            <div class="price">LBank: <span>${opp.lbank_price !== null ? opp.lbank_price.toFixed(6) : 'N/A'} (объем: 50.00 USDT)</span></div>
-                            <div class="diff">Разница: <span>${opp.diff_percent !== null ? `+${opp.diff_percent.toFixed(2)}%` : 'N/A'}</span></div>
-                            <a href="${opp.trade_link || '#'}" target="_blank">Trade Link</a>
-                            <a href="${opp.deposit_link || '#'}" target="_blank">Deposit Link</a>
-                        `;
-                        opportunitiesDiv.appendChild(div);
-                    });
+                    if (data.opportunities.length === 0) {
+                        opportunitiesDiv.innerHTML = '<p>Нет арбитражных возможностей.</p>';
+                    } else {
+                        data.opportunities.forEach(opp => {
+                            const div = document.createElement('div');
+                            div.className = 'opportunity';
+                            div.innerHTML = `
+                                <div class="token-label">${opp.token_name} ${opp.contract ? `<span class="contract-text">${opp.contract}</span>` : ''}</div>
+                                <div class="price">Jupiter: <span>${opp.jupiter_price !== null ? opp.jupiter_price.toFixed(6) : 'N/A'}</span></div>
+                                <div class="price">LBank: <span>${opp.lbank_price !== null ? opp.lbank_price.toFixed(6) : 'N/A'} (объем: 50.00 USDT)</span></div>
+                                <div class="diff">Разница: <span>${opp.diff_percent !== null ? `+${opp.diff_percent.toFixed(2)}%` : 'N/A'}</span></div>
+                                <a href="${opp.trade_link || '#'}" target="_blank">Trade Link</a>
+                                <a href="${opp.deposit_link || '#'}" target="_blank">Deposit Link</a>
+                            `;
+                            opportunitiesDiv.appendChild(div);
+                        });
+                    }
+                } else {
+                    console.error('Server error:', data.message);
                 }
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Fetch error:', error);
             }
         }
 
-        // Обновление каждые 2 секунды
-        setInterval(fetchData, 2000);
+        // Обновление каждую секунду (соответствует задержке скрипта)
+        setInterval(fetchData, 1000);
         // Первоначальная загрузка
         fetchData();
     </script>
