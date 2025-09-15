@@ -1,87 +1,28 @@
 import os
-from flask import Flask, render_template_string
+from flask import Flask, render_template, request
 import json
 
 app = Flask(__name__)
 
-# ... остальной код без изменений ...
+# Загружаем контракты из JSON (замените на свой файл или API)
+with open('token_contracts.json', 'r') as f:
+    token_contracts = json.load(f)
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-# Загрузка данных из token_contracts.json
-with open('token_contracts.json', 'r') as file:
-    tokens_data = json.load(file)
-
-# HTML-шаблон для отображения токенов и контрактов
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Список токенов и контрактов</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        table {
-            border-collapse: collapse;
-            width: 80%;
-            margin: 20px auto;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #e6f3ff;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Список токенов и их контрактов</h1>
-        <table>
-            <tr>
-                <th>Токен</th>
-                <th>Контракт</th>
-            </tr>
-            {% for token, contract in tokens %}
-            <tr>
-                <td>{{ token }}</td>
-                <td>{{ contract }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-</body>
-</html>
-"""
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    # Передаем данные в шаблон
-    return render_template_string(HTML_TEMPLATE, tokens=tokens_data.items())
+    token = None
+    contract = None
+    trade_link = None
+    deposit_link = None
+
+    if request.method == 'POST':
+        token = request.form.get('token_name', '').strip().lower()
+        if token in token_contracts:
+            contract = token_contracts[token]
+            trade_link = f"https://www.lbank.com/trade/{token}_usdt"
+            deposit_link = f"https://www.lbank.com/wallet/account/main/deposit/crypto/{token}/solana"
+
+    return render_template('index.html', token=token, contract=contract, trade_link=trade_link, deposit_link=deposit_link)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

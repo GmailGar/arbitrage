@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Information</title>
+</head>
+<body>
+    <h1>Token Details</h1>
+    <form method="POST">
+        <label for="token_name">Enter Token Name:</label>
+        <input type="text" id="token_name" name="token_name" required>
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if token %}
+    <table border="1">
+        <tr>
+            <th>Token</th>
+            <th>Contract</th>
+            <th>Trade Link</th>
+            <th>Deposit Link</th>
+        </tr>
+        <tr>
+            <td>{{ token|default('N/A') }}</td>
+            <td>{{ contract|default('N/A') }}</td>
+            <td><a href="{{ trade_link|default('#') }}" target="_blank">{{ trade_link|default('N/A') }}</a></td>
+            <td><a href="{{ deposit_link|default('#') }}" target="_blank">{{ deposit_link|default('N/A') }}</a></td>
+        </tr>
+    </table>
+    {% else %}
+    <p>Please submit a token name.</p>
+    {% endif %}
+</body>
+</html>
