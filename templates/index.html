@@ -1,39 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Token Information</title>
+    <title>Arbitrage Opportunities</title>
     <style>
         body {
             background-color: #1a1a1a;
             color: #ffffff;
             font-family: Arial, sans-serif;
+            margin: 20px;
         }
         h1 {
             color: #ffffff;
             text-align: center;
         }
-        form {
-            text-align: center;
-            margin: 20px 0;
+        .iteration {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #BF00FF; /* Фиолетовый неоновый */
         }
-        label {
-            margin-right: 10px;
-        }
-        input[type="text"] {
-            padding: 5px;
-        }
-        input[type="submit"] {
-            padding: 5px 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .token-item {
-            margin: 10px 0;
+        .opportunity {
+            margin: 15px 0;
             padding: 10px;
             border: 1px solid #333;
             border-radius: 5px;
@@ -46,19 +32,20 @@
             color: #00FF00; /* Неоновый зеленый */
             margin-right: 10px;
         }
-        .copy-btn {
-            padding: 5px 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
+        .price, .diff {
+            margin-left: 20px;
         }
-        .copy-btn:hover {
-            background-color: #45a049;
+        .price span {
+            color: #ffffff;
+        }
+        .diff span {
+            color: #ffffff;
         }
         a {
             color: #0000FF; /* Синий */
             text-decoration: none;
+            display: block;
+            margin-top: 5px;
         }
         a:hover {
             text-decoration: underline;
@@ -66,41 +53,48 @@
     </style>
 </head>
 <body>
-    <h1>Token Details</h1>
-    <form method="POST">
-        <label for="token_name">Enter Token Name:</label>
-        <input type="text" id="token_name" name="token_name" required>
-        <input type="submit" value="Submit">
-    </form>
-
-    {% if token %}
-    <div class="token-item">
-        <span class="token-label">Token {{ token|upper }}</span>
+    <h1>Arbitrage Opportunities</h1>
+    <div id="content">
+        <div class="iteration" id="iteration">Итерация: -</div>
+        <div id="opportunities"></div>
     </div>
-    <div class="token-item">
-        <span class="contract-text">Contract {{ contract|default('N/A') }}</span>
-        {% if contract %}
-        <button class="copy-btn" onclick="copyToClipboard('{{ contract }}')">Copy</button>
-        {% endif %}
-    </div>
-    <div class="token-item">
-        <span>Trade Link: </span><a href="{{ trade_link|default('#') }}" target="_blank">{{ trade_link|default('N/A') }}</a>
-    </div>
-    <div class="token-item">
-        <span>Deposit Link: </span><a href="{{ deposit_link|default('#') }}" target="_blank">{{ deposit_link|default('N/A') }}</a>
-    </div>
-    {% else %}
-    <p>Please submit a token name.</p>
-    {% endif %}
 
     <script>
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Contract copied to clipboard!');
-            }).catch(err => {
-                alert('Failed to copy: ' + err);
-            });
+        async function fetchData() {
+            try {
+                const response = await fetch('/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('iteration').textContent = `Итерация ${data.iteration}`;
+                    const opportunitiesDiv = document.getElementById('opportunities');
+                    opportunitiesDiv.innerHTML = '';
+
+                    data.opportunities.forEach(opp => {
+                        const div = document.createElement('div');
+                        div.className = 'opportunity';
+                        div.innerHTML = `
+                            <div class="token-label">${opp.token_name} ${opp.contract ? `<span class="contract-text">${opp.contract}</span>` : ''}</div>
+                            <div class="price">Jupiter: <span>${opp.jupiter_price !== null ? opp.jupiter_price.toFixed(6) : 'N/A'}</span></div>
+                            <div class="price">LBank: <span>${opp.lbank_price !== null ? opp.lbank_price.toFixed(6) : 'N/A'} (объем: 50.00 USDT)</span></div>
+                            <div class="diff">Разница: <span>${opp.diff_percent !== null ? `+${opp.diff_percent.toFixed(2)}%` : 'N/A'}</span></div>
+                            <a href="${opp.trade_link || '#'}" target="_blank">Trade Link</a>
+                            <a href="${opp.deposit_link || '#'}" target="_blank">Deposit Link</a>
+                        `;
+                        opportunitiesDiv.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         }
+
+        // Обновление каждые 2 секунды
+        setInterval(fetchData, 2000);
+        // Первоначальная загрузка
+        fetchData();
     </script>
 </body>
 </html>
