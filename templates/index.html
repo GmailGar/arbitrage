@@ -2,6 +2,32 @@
 <html>
 <head>
     <title>Token Information</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .copy-btn {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
     <h1>Token Details</h1>
@@ -12,7 +38,7 @@
     </form>
 
     {% if token %}
-    <table border="1">
+    <table>
         <tr>
             <th>Token</th>
             <th>Contract</th>
@@ -20,8 +46,13 @@
             <th>Deposit Link</th>
         </tr>
         <tr>
-            <td>{{ token|default('N/A') }}</td>
-            <td>{{ contract|default('N/A') }}</td>
+            <td>Token {{ token|default('N/A') }}</td>
+            <td>
+                Contract {{ contract|default('N/A') }}
+                {% if contract %}
+                <button class="copy-btn" onclick="copyToClipboard('{{ contract }}')">Copy</button>
+                {% endif %}
+            </td>
             <td><a href="{{ trade_link|default('#') }}" target="_blank">{{ trade_link|default('N/A') }}</a></td>
             <td><a href="{{ deposit_link|default('#') }}" target="_blank">{{ deposit_link|default('N/A') }}</a></td>
         </tr>
@@ -29,5 +60,15 @@
     {% else %}
     <p>Please submit a token name.</p>
     {% endif %}
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Contract copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+    </script>
 </body>
 </html>
