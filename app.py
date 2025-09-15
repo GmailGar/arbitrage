@@ -1,8 +1,14 @@
+import os
 from flask import Flask, render_template_string
 import json
 
 app = Flask(__name__)
 
+# ... остальной код без изменений ...
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
 # Загрузка данных из token_contracts.json
 with open('token_contracts.json', 'r') as file:
     tokens_data = json.load(file)
