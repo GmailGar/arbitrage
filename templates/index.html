@@ -1,107 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arbitrage Opportunities</title>
-    <style>
-        body {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #ffffff;
-            text-align: center;
-        }
-        .iteration {
-            font-size: 1.2em;
-            margin-bottom: 20px;
-            color: #BF00FF; /* Фиолетовый неоновый */
-        }
-        .opportunity {
-            margin: 15px 0;
-            padding: 10px;
-            border: 1px solid #333;
-            border-radius: 5px;
-        }
-        .token-label {
-            font-weight: bold;
-            color: #BF00FF; /* Фиолетовый неоновый */
-        }
-        .contract-text {
-            color: #00FF00; /* Неоновый зеленый */
-            margin-right: 10px;
-        }
-        .price, .diff {
-            margin-left: 20px;
-        }
-        .price span {
-            color: #ffffff;
-        }
-        .diff span {
-            color: #ffffff;
-        }
-        a {
-            color: #0000FF; /* Синий */
-            text-decoration: none;
-            display: block;
-            margin-top: 5px;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Arbitrage Opportunities</h1>
-    <div id="content">
-        <div class="iteration" id="iteration">Итерация: -</div>
-        <div id="opportunities"></div>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4 text-center">Arbitrage Opportunities</h1>
+        <h2 class="text-xl mb-4">Итерация: {{ iteration | default('Ожидание данных') }}</h2>
+        
+        {% if opportunities %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="py-2 px-4 border-b">Токен</th>
+                        <th class="py-2 px-4 border-b">Цена на Jupiter</th>
+                        <th class="py-2 px-4 border-b">Цена на LBank</th>
+                        <th class="py-2 px-4 border-b">Разница (%)</th>
+                        <th class="py-2 px-4 border-b">Контракт</th>
+                        <th class="py-2 px-4 border-b">Торговля</th>
+                        <th class="py-2 px-4 border-b">Депозит</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for opp in opportunities %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-4 border-b">{{ opp.token_name }}</td>
+                        <td class="py-2 px-4 border-b">{{ "{:.8f}".format(opp.jupiter_price) }}</td>
+                        <td class="py-2 px-4 border-b">{{ "{:.8f}".format(opp.lbank_price) }}</td>
+                        <td class="py-2 px-4 border-b">{{ "{:.2f}".format(opp.diff_percent) }}%</td>
+                        <td class="py-2 px-4 border-b">
+                            {% if opp.contract %}
+                                {{ opp.contract }}
+                            {% else %}
+                                Не найден
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b">
+                            {% if opp.trade_link %}
+                                <a href="{{ opp.trade_link }}" class="text-blue-600 hover:underline" target="_blank">Торговать</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b">
+                            {% if opp.deposit_link %}
+                                <a href="{{ opp.deposit_link }}" class="text-blue-600 hover:underline" target="_blank">Депозит</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-gray-600">Нет арбитражных возможностей или данные еще не получены.</p>
+        {% endif %}
     </div>
-
-    <script>
-        async function fetchData() {
-            try {
-                const response = await fetch('/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                });
-                const data = await response.json();
-                console.log('Fetched data:', data); // Отладочный вывод
-                if (data.status === 'success') {
-                    document.getElementById('iteration').textContent = `Итерация ${data.iteration}`;
-                    const opportunitiesDiv = document.getElementById('opportunities');
-                    opportunitiesDiv.innerHTML = '';
-
-                    if (data.opportunities.length === 0) {
-                        opportunitiesDiv.innerHTML = '<p>Нет арбитражных возможностей.</p>';
-                    } else {
-                        data.opportunities.forEach(opp => {
-                            const div = document.createElement('div');
-                            div.className = 'opportunity';
-                            div.innerHTML = `
-                                <div class="token-label">${opp.token_name} ${opp.contract ? `<span class="contract-text">${opp.contract}</span>` : ''}</div>
-                                <div class="price">Jupiter: <span>${opp.jupiter_price !== null ? opp.jupiter_price.toFixed(6) : 'N/A'}</span></div>
-                                <div class="price">LBank: <span>${opp.lbank_price !== null ? opp.lbank_price.toFixed(6) : 'N/A'} (объем: 50.00 USDT)</span></div>
-                                <div class="diff">Разница: <span>${opp.diff_percent !== null ? `+${opp.diff_percent.toFixed(2)}%` : 'N/A'}</span></div>
-                                <a href="${opp.trade_link || '#'}" target="_blank">Trade Link</a>
-                                <a href="${opp.deposit_link || '#'}" target="_blank">Deposit Link</a>
-                            `;
-                            opportunitiesDiv.appendChild(div);
-                        });
-                    }
-                } else {
-                    console.error('Server error:', data.message);
-                }
-            } catch (error) {
-                console.error('Fetch error:', error);
-            }
-        }
-
-        // Обновление каждую секунду (соответствует задержке скрипта)
-        setInterval(fetchData, 1000);
-        // Первоначальная загрузка
-        fetchData();
-    </script>
 </body>
 </html>
